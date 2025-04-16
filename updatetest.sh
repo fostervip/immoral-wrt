@@ -689,8 +689,8 @@ main() {
     optimize_smartDNS
     update_mosdns_deconfig
     fix_quickstart
-    update_oaf_deconfig
-    add_timecontrol
+    # update_oaf_deconfig
+    # add_timecontrol
     add_gecoosac
     install_feeds
     support_fw4_adg
