@@ -586,9 +586,11 @@ support_fw4_adg() {
 
 add_timecontrol() {
     local timecontrol_dir="$BUILD_DIR/package/luci-app-timecontrol"
+    local netspeedtest="$BUILD_DIR/package/netspeedtest"
     # 删除旧的目录（如果存在）
     rm -rf "$timecontrol_dir" 2>/dev/null
     git clone --depth 1 https://github.com/sirpdboy/luci-app-timecontrol.git "$timecontrol_dir"
+    git clone --depth 1 https://github.com/sirpdboy/netspeedtest.git "$netspeedtest"
 }
 
 add_gecoosac() {
