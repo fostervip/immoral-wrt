@@ -1,6 +1,8 @@
 #!/bin/sh
 
 board_name=$(cat /tmp/sysinfo/board_name)
+CFG_PATH="$BUILD_DIR/package/base-files/files/bin/config_generate"
+
 
 configure_wifi() {
     local radio=$1
@@ -36,32 +38,44 @@ EOF
 jdc_ax1800_pro_wifi_cfg() {
     configure_wifi 0 149 HE80 20 'Dodo-5G' 'win111111'
     configure_wifi 1 1 HE20 20 'Dodo' 'win111111'
+    local LAN_ADDR="192.168.6.1"
+    sed -i 's/192\.168\.[0-9]*\.[0-9]*/'$LAN_ADDR'/g' $CFG_PATH
 }
 
 jdc_ax6600_wifi_cfg() {
     configure_wifi 0 149 HE80 22 'Dodo-5G1' 'win111111'
     configure_wifi 1 1 HE20 22 'Dodo' 'win111111'
     configure_wifi 2 44 HE160 23 'Dodo-5G2' 'win111111'
+    local LAN_ADDR="192.168.66.1"
+    sed -i 's/192\.168\.[0-9]*\.[0-9]*/'$LAN_ADDR'/g' $CFG_PATH
 }
 
 redmi_ax5_wifi_cfg() {
     configure_wifi 0 149 HE80 20 'Redmi_AX5_5G' '12345678'
     configure_wifi 1 1 HE20 20 'Redmi_AX5' '12345678'
+    local LAN_ADDR="192.168.6.1"
+    sed -i 's/192\.168\.[0-9]*\.[0-9]*/'$LAN_ADDR'/g' $CFG_PATH
 }
 
 aliyun_ap8220_wifi_cfg() {
     configure_wifi 0 149 HE80 26 'Aliyun_AP8220_5G' '12345678'
     configure_wifi 1 1 HE20 23 'Aliyun_AP8220' '12345678'
+    local LAN_ADDR="192.168.6.1"
+    sed -i 's/192\.168\.[0-9]*\.[0-9]*/'$LAN_ADDR'/g' $CFG_PATH
 }
 
 cmcc_rax3000m_wifi_cfg() {
     configure_wifi 0 1 HE20 23 'CMCC_RAX3000M' '12345678'
     configure_wifi 1 44 HE160 25 'CMCC_RAX3000M_5G' '12345678'
+    local LAN_ADDR="192.168.6.1"
+    sed -i 's/192\.168\.[0-9]*\.[0-9]*/'$LAN_ADDR'/g' $CFG_PATH
 }
 
 redmi_ax6_wifi_cfg() {
     configure_wifi 0 149 HE80 22 'Redmi_AX6_5G' '12345678'
     configure_wifi 1 1 HE20 21 'Redmi_AX6' '12345678'
+    local LAN_ADDR="192.168.6.1"
+    sed -i 's/192\.168\.[0-9]*\.[0-9]*/'$LAN_ADDR'/g' $CFG_PATH
 }
 
 case "${board_name}" in
