@@ -668,21 +668,6 @@ add_gecoosac() {
     git clone --depth 1 https://github.com/lwb1978/openwrt-gecoosac.git "$gecoosac_dir"
 }
 
-fix_gcc14_aarch64_flags() {
-    local target_mk="$BUILD_DIR/include/target.mk"
-
-    if [ ! -f "$target_mk" ]; then
-        echo "target.mk 不存在，跳过 GCC14 flags 修复"
-        return 0
-    fi
-
-    echo "修复 GCC 14 AArch64 -mcpu/-march 冲突..."
-
-    # 移除 -mcpu=cortex-a53（保留 march）
-    sed -i 's/-mcpu=cortex-a53//g' "$target_mk"
-}
-
-
 update_proxy_app_menu_location() {
     # passwall
     local passwall_path="$BUILD_DIR/package/feeds/small8/luci-app-passwall/luasrc/controller/passwall.lua"
@@ -742,7 +727,6 @@ main() {
     fix_miniupnpd
     update_golang
     change_dnsmasq2full
-    fix_gcc14_aarch64_flags
     fix_mk_def_depends
     add_wifi_default_set
     update_default_lan_addr
