@@ -198,6 +198,21 @@ change_dnsmasq2full() {
     fi
 }
 
+fix_gcc14_aarch64_flags() {
+    local target_mk="$BUILD_DIR/include/target.mk"
+
+    if [ ! -f "$target_mk" ]; then
+        echo "target.mk 不存在，跳过 GCC14 flags 修复"
+        return 0
+    fi
+
+    echo "修复 GCC 14 AArch64 -mcpu/-march 冲突..."
+
+    # 移除 -mcpu=cortex-a53（保留 march）
+    sed -i 's/-mcpu=cortex-a53//g' "$target_mk"
+}
+
+
 install_fullconenat() {
     if [ ! -d $BUILD_DIR/package/network/utils/fullconenat-nft ]; then
         ./scripts/feeds install -p small8 -f fullconenat-nft
@@ -659,6 +674,7 @@ main() {
     fix_miniupnpd
     update_golang
     change_dnsmasq2full
+    fix_gcc14_aarch64_flags
     fix_mk_def_depends
     add_wifi_default_set
     update_default_lan_addr
