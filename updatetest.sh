@@ -84,6 +84,82 @@ update_feeds() {
     ./scripts/feeds update -a
 }
 
+update_lucky() {
+    local lucky_repo_url="https://github.com/gdy666/luci-app-lucky.git"
+    local target_small8_dir="$BUILD_DIR/feeds/small8"
+    local lucky_dir="$target_small8_dir/lucky"
+    local luci_app_lucky_dir="$target_small8_dir/luci-app-lucky"
+
+    # 提前检查目标目录是否存在
+    if [ ! -d "$lucky_dir" ] || [ ! -d "$luci_app_lucky_dir" ]; then
+        echo "Warning: $lucky_dir 或 $luci_app_lucky_dir 不存在，跳过 lucky 源代码更新。" >&2
+    else
+        local tmp_dir
+        tmp_dir=$(mktemp -d)
+
+        echo "正在从 $lucky_repo_url 稀疏检出 luci-app-lucky 和 lucky..."
+
+        if ! git clone --depth 1 --filter=blob:none --no-checkout "$lucky_repo_url" "$tmp_dir"; then
+            echo "错误：从 $lucky_repo_url 克隆仓库失败" >&2
+            rm -rf "$tmp_dir"
+            return 0
+        fi
+
+        pushd "$tmp_dir" > /dev/null
+        git sparse-checkout init --cone
+        git sparse-checkout set luci-app-lucky lucky || {
+            echo "错误：稀疏检出 luci-app-lucky 或 lucky 失败" >&2
+            popd > /dev/null
+            rm -rf "$tmp_dir"
+            return 0
+        }
+        git checkout --quiet
+
+        # 覆盖到目标目录
+        \cp -rf "$tmp_dir/luci-app-lucky/." "$luci_app_lucky_dir/"
+        \cp -rf "$tmp_dir/lucky/." "$lucky_dir/"
+
+        popd > /dev/null
+        rm -rf "$tmp_dir"
+        echo "luci-app-lucky 和 lucky 源代码更新完成。"
+    fi
+
+    # 默认关闭lucky
+    local lucky_conf="$BUILD_DIR/feeds/small8/lucky/files/luckyuci"
+    if [ -f "$lucky_conf" ]; then
+        sed -i "s/option enabled '1'/option enabled '0'/g" "$lucky_conf"
+        sed -i "s/option logger '1'/option logger '0'/g" "$lucky_conf"
+    fi
+
+    # 从补丁文件名中提取版本号
+    local version
+    version=$(find "$BASE_PATH/patches" -name "lucky_*.tar.gz" -printf "%f\n" | head -n 1 | sed -n 's/^lucky_\(.*\)_Linux.*$/\1/p')
+    if [ -z "$version" ]; then
+        echo "Warning: 未找到 lucky 补丁文件，跳过更新。" >&2
+        return 0
+    fi
+
+    local makefile_path="$BUILD_DIR/feeds/small8/lucky/Makefile"
+    if [ ! -f "$makefile_path" ]; then
+        echo "Warning: lucky Makefile not found. Skipping." >&2
+        return 0
+    fi
+
+    echo "正在更新 lucky Makefile..."
+    # 使用本地补丁文件，而不是下载
+    local patch_line="\\t[ -f \$(TOPDIR)/../patches/lucky_${version}_Linux_\$(LUCKY_ARCH)_wanji.tar.gz ] && install -Dm644 \$(TOPDIR)/../patches/lucky_${version}_Linux_\$(LUCKY_ARCH)_wanji.tar.gz \$(PKG_BUILD_DIR)/\$(PKG_NAME)_\$(PKG_VERSION)_Linux_\$(LUCKY_ARCH).tar.gz"
+
+    # 确保 Build/Prepare 部分存在，然后在其后添加我们的行
+    if grep -q "Build/Prepare" "$makefile_path"; then
+        sed -i "/Build\\/Prepare/a\\$patch_line" "$makefile_path"
+        # 删除任何现有的 wget 命令
+        sed -i '/wget/d' "$makefile_path"
+        echo "lucky Makefile 更新完成。"
+    else
+        echo "Warning: lucky Makefile 中未找到 'Build/Prepare'。跳过。" >&2
+    fi
+}
+
 remove_unwanted_packages() {
     local luci_packages=(
         "luci-app-passwall" "luci-app-smartdns" "luci-app-ddns-go" "luci-app-rclone"
@@ -663,6 +739,7 @@ main() {
     fix_mk_def_depends
     add_wifi_default_set
     update_default_lan_addr
+    update_lucky
     remove_something_nss_kmod
     update_affinity_script
     fix_build_for_openssl
